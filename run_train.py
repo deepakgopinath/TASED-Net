@@ -81,11 +81,12 @@ def main():
     model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
     torch.backends.cudnn.benchmark = False
     model.train()
+    dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
+    train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
-    train_loader = InfiniteDataLoader(
-        DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=8
-    )
+    import IPython
 
+    IPython.embed(banner1="check ds")
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()

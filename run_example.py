@@ -51,9 +51,6 @@ def main():
     # iterate over the path_indata directory
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
-    import IPython
-
-    IPython.embed(banner1="check before train")
     for dname in list_indata:
         print("processing " + dname)
         list_frames = [

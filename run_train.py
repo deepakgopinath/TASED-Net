@@ -22,7 +22,7 @@ def main():
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 1
+    num_gpu = 2
     pile = 5
     batch_size = 8
     num_iters = 1000
@@ -84,12 +84,10 @@ def main():
     dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
     train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
-    import IPython
-
-    IPython.embed(banner1="check ds")
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
+    # no testing loop during training.
     for clip, annt in islice(train_loader, num_iters * pile):
         with torch.set_grad_enabled(True):
             output = model(clip.cuda())

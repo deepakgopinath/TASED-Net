@@ -3,11 +3,13 @@ import os
 import numpy as np
 import cv2
 import time
+import random
+import pickle
 from datetime import timedelta
 import torch
 from model import TASED_v2
 from loss import KLDLoss
-from dataset import DHF1KDataset, InfiniteDataLoader
+from dataset import DHF1KDataset, InfiniteDataLoader, NBackDataset
 from itertools import islice
 
 
@@ -22,6 +24,7 @@ def main():
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
+    print("Path to data folder ", path_indata)
     num_gpu = 2
     pile = 5
     batch_size = 8
@@ -81,8 +84,27 @@ def main():
     model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
     torch.backends.cudnn.benchmark = False
     model.train()
-    dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
-    train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+    # dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
+    with open("nback_list_num_frames_all.pkl", "rb") as fp:
+        nback_list_num_frames_all_dict = pickle.load(fp)
+
+    num_all_videos = len(nback_list_num_frames_all_dict.keys())
+    video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
+    print("Length before deletion ", len(video_list))
+    if "sanity_check_challenge_1-of-3" in video_list:
+        video_list.remove("sanity_check_challenge_1-of-3")
+    if "sanity_check_challenge_2-of-3" in video_list:
+        video_list.remove("sanity_check_challenge_2-of-3")
+    if "sanity_check_challenge_3-of-3" in video_list:
+        video_list.remove("sanity_check_challenge_3-of-3")
+
+    print("Length after deletion ", len(video_list))
+
+    nback_ds = NBackDataset(path_indata, len_temporal, video_list)
+
+    # train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+
+    train_loader = InfiniteDataLoader(nback_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
     i, step = 0, 0
     loss_sum = 0

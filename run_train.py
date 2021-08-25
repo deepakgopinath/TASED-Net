@@ -23,9 +23,9 @@ def main():
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
-            ds_type = sys.argv[3]
+            ds_type = sys.argv[2]
             if len(sys.argv) > 3:
-                len_temporal = int(sys.argv[2])
+                len_temporal = int(sys.argv[3])
                 if len(sys.argv) > 4:
                     path_output = sys.argv[4]
 

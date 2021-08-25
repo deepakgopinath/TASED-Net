@@ -18,10 +18,16 @@ def main():
     # optional two command-line arguments
     path_indata = "./DHF1K"
     path_output = "./output"
+    ds_type = 'DHF1k'
+    len_temporal = 32
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
-            path_output = sys.argv[2]
+            len_temporal = int(sys.argv[2]
+            if len(sys.argv) > 3:
+                ds_type = sys.argv[3]
+                if len(sys.argv) > 4:
+                    path_output = sys.argv[4]
 
     # we checked that using only 2 gpus is enough to produce similar results
     print("Path to data folder ", path_indata)
@@ -29,7 +35,7 @@ def main():
     pile = 5
     batch_size = 8
     num_iters = 1000
-    len_temporal = 32
+    
     file_weight = "./S3D_kinetics400.pt"
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
@@ -84,27 +90,29 @@ def main():
     model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
     torch.backends.cudnn.benchmark = False
     model.train()
-    # dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
-    with open("nback_list_num_frames_all.pkl", "rb") as fp:
-        nback_list_num_frames_all_dict = pickle.load(fp)
+    if ds_type == 'DHF1k':
+        dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
+        train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+    elif ds_type == 'nback':
+        with open("nback_list_num_frames_all.pkl", "rb") as fp:
+            nback_list_num_frames_all_dict = pickle.load(fp)
 
-    num_all_videos = len(nback_list_num_frames_all_dict.keys())
-    video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
-    print("Length before deletion ", len(video_list))
-    if "sanity_check_challenge_1-of-3" in video_list:
-        video_list.remove("sanity_check_challenge_1-of-3")
-    if "sanity_check_challenge_2-of-3" in video_list:
-        video_list.remove("sanity_check_challenge_2-of-3")
-    if "sanity_check_challenge_3-of-3" in video_list:
-        video_list.remove("sanity_check_challenge_3-of-3")
+        num_all_videos = len(nback_list_num_frames_all_dict.keys())
+        video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
+        print("Length before deletion ", len(video_list))
+        if "sanity_check_challenge_1-of-3" in video_list:
+            video_list.remove("sanity_check_challenge_1-of-3")
+        if "sanity_check_challenge_2-of-3" in video_list:
+            video_list.remove("sanity_check_challenge_2-of-3")
+        if "sanity_check_challenge_3-of-3" in video_list:
+            video_list.remove("sanity_check_challenge_3-of-3")
 
-    print("Length after deletion ", len(video_list))
+        print("Length after deletion ", len(video_list))
 
-    nback_ds = NBackDataset(path_indata, len_temporal, video_list)
+        nback_ds = NBackDataset(path_indata, len_temporal, video_list)
 
-    # train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
-
-    train_loader = InfiniteDataLoader(nback_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+        
+        train_loader = InfiniteDataLoader(nback_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
     i, step = 0, 0
     loss_sum = 0

@@ -18,12 +18,12 @@ def main():
     # optional two command-line arguments
     path_indata = "./DHF1K"
     path_output = "./output"
-    ds_type = 'DHF1k'
+    ds_type = "DHF1k"
     len_temporal = 32
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
-            len_temporal = int(sys.argv[2]
+            len_temporal = int(sys.argv[2])
             if len(sys.argv) > 3:
                 ds_type = sys.argv[3]
                 if len(sys.argv) > 4:
@@ -35,7 +35,7 @@ def main():
     pile = 5
     batch_size = 8
     num_iters = 1000
-    
+
     file_weight = "./S3D_kinetics400.pt"
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
@@ -90,10 +90,10 @@ def main():
     model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
     torch.backends.cudnn.benchmark = False
     model.train()
-    if ds_type == 'DHF1k':
+    if ds_type == "DHF1k":
         dhf1k_ds = DHF1KDataset(path_indata, len_temporal)
         train_loader = InfiniteDataLoader(dhf1k_ds, batch_size=batch_size, shuffle=True, num_workers=8)
-    elif ds_type == 'nback':
+    elif ds_type == "nback":
         with open("nback_list_num_frames_all.pkl", "rb") as fp:
             nback_list_num_frames_all_dict = pickle.load(fp)
 
@@ -111,7 +111,6 @@ def main():
 
         nback_ds = NBackDataset(path_indata, len_temporal, video_list)
 
-        
         train_loader = InfiniteDataLoader(nback_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
     i, step = 0, 0

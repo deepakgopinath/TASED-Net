@@ -18,14 +18,14 @@ def main():
     # optional two command-line arguments
     path_indata = "./DHF1K"
     path_output = "./output"
-    ds_type = "DHF1k"
-    len_temporal = 32
+    ds_type = "DHF1k"  # or nback
+    len_temporal = 32  # Seems like this is fixed, or else the model fwd breaks
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
-            len_temporal = int(sys.argv[2])
+            ds_type = sys.argv[3]
             if len(sys.argv) > 3:
-                ds_type = sys.argv[3]
+                len_temporal = int(sys.argv[2])
                 if len(sys.argv) > 4:
                     path_output = sys.argv[4]
 
@@ -97,7 +97,10 @@ def main():
         with open("nback_list_num_frames_all.pkl", "rb") as fp:
             nback_list_num_frames_all_dict = pickle.load(fp)
 
+        # remove video whose length is less than 32
+        nback_list_num_frames_all_dict = {k: v for k, v in nback_list_num_frames_all_dict.items() if v >= len_temporal}
         num_all_videos = len(nback_list_num_frames_all_dict.keys())
+        print("Number of long enough videos ", num_all_videos)
         video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
         print("Length before deletion ", len(video_list))
         if "sanity_check_challenge_1-of-3" in video_list:

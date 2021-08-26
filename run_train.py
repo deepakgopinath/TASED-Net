@@ -102,7 +102,7 @@ def main():
         num_all_videos = len(nback_list_num_frames_all_dict.keys())
         print("Number of long enough videos ", num_all_videos)
         video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
-        print("Length before deletion ", len(video_list))
+        print("Length before deleting sanity challenge ", len(video_list))
         if "sanity_check_challenge_1-of-3" in video_list:
             video_list.remove("sanity_check_challenge_1-of-3")
         if "sanity_check_challenge_2-of-3" in video_list:
@@ -110,7 +110,7 @@ def main():
         if "sanity_check_challenge_3-of-3" in video_list:
             video_list.remove("sanity_check_challenge_3-of-3")
 
-        print("Length after deletion ", len(video_list))
+        print("Length  deleting sanity challenge ", len(video_list))
 
         nback_ds = NBackDataset(path_indata, len_temporal, video_list)
 

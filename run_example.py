@@ -60,18 +60,6 @@ def main():
     # iterate over the path_indata directory
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
-    if ds_type == "nback":
-        with open("nback_list_num_frames_all.pkl", "rb") as fp:
-            nback_list_num_frames_all_dict = pickle.load(fp)
-        # remove video whose length is less than 32
-        nback_list_num_frames_all_dict = {k: v for k, v in nback_list_num_frames_all_dict.items() if v >= len_temporal}
-        list_indata = list(nback_list_num_frames_all_dict.keys())
-        if "sanity_check_challenge_1-of-3" in list_indata:
-            list_indata.remove("sanity_check_challenge_1-of-3")
-        if "sanity_check_challenge_2-of-3" in list_indata:
-            list_indata.remove("sanity_check_challenge_2-of-3")
-        if "sanity_check_challenge_3-of-3" in list_indata:
-            list_indata.remove("sanity_check_challenge_3-of-3")
 
     ctr = 0
     import IPython

@@ -3,6 +3,7 @@ import os
 import numpy as np
 import cv2
 import torch
+import pickle
 from model import TASED_v2
 from scipy.ndimage.filters import gaussian_filter
 
@@ -24,6 +25,8 @@ def main():
                 file_weight = sys.argv[3]
                 if len(sys.argv) > 4:
                     max_count = int(sys.argv[4])
+                    if len(sys.argv) > 5:
+                        ds_type = sys.argv[5]
 
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -57,6 +60,19 @@ def main():
     # iterate over the path_indata directory
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
+    if ds_type == "nback":
+        with open("nback_list_num_frames_all.pkl", "rb") as fp:
+            nback_list_num_frames_all_dict = pickle.load(fp)
+        # remove video whose length is less than 32
+        nback_list_num_frames_all_dict = {k: v for k, v in nback_list_num_frames_all_dict.items() if v >= len_temporal}
+        list_indata = list(nback_list_num_frames_all_dict.keys())
+        if "sanity_check_challenge_1-of-3" in list_indata:
+            list_indata.remove("sanity_check_challenge_1-of-3")
+        if "sanity_check_challenge_2-of-3" in list_indata:
+            list_indata.remove("sanity_check_challenge_2-of-3")
+        if "sanity_check_challenge_3-of-3" in list_indata:
+            list_indata.remove("sanity_check_challenge_3-of-3")
+
     ctr = 0
     import IPython
 

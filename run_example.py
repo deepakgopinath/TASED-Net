@@ -23,7 +23,7 @@ def main():
             if len(sys.argv) > 3:
                 file_weight = sys.argv[3]
                 if len(sys.argv) > 4:
-                    max_count = in(sys.argv[4])
+                    max_count = int(sys.argv[4])
 
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -58,7 +58,9 @@ def main():
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
     ctr = 0
-    import IPython; IPython.embed(banner1='check input dir')
+    import IPython
+
+    IPython.embed(banner1="check input dir")
     for dname in list_indata:
         # for each directory in the input folder
         if ctr > max_count:
@@ -98,10 +100,10 @@ def main():
 
         else:
             print(" more frames are needed")
-        
+
         ctr += 1
-    
-    print('Done inference for {} videos'.format(max_count))
+
+    print("Done inference for {} videos".format(max_count))
 
 
 def transform(snippet):

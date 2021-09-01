@@ -17,7 +17,7 @@ def transform(snippet):
 
 
 class NBackDataset(Dataset):
-    def __init__(self, path_data, len_snippet, data_list):
+    def __init__(self, path_data, len_snippet, data_list, gaussian_kernel_size=101):
 
         """
         data_list: list of strs. all videos that will be part of the dataset
@@ -28,6 +28,7 @@ class NBackDataset(Dataset):
             self.nback_list_num_frames_all_dict = pickle.load(fp)
 
         self.video_data_list = data_list
+        self.gaussian_kernel_size = gaussian_kernel_size
 
     def __len__(self):
         return len(self.video_data_list)
@@ -36,7 +37,7 @@ class NBackDataset(Dataset):
         file_name = self.video_data_list[idx]
         path_clip = os.path.join(self.path_data, "stimuli_chunked_10", file_name)
         # path to the smoothed fixation maps for each frame.
-        path_annt = os.path.join(self.path_data, "fixation_maps", file_name)
+        path_annt = os.path.join(self.path_data, "fixation_maps_gk_" + str(self.gaussian_kernel_size), file_name)
 
         # -1 because the last frame sometimes is empty
         start_idx = np.random.randint(0, (self.nback_list_num_frames_all_dict[file_name] - 1) - self.len_snippet + 1)

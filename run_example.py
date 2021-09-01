@@ -122,7 +122,7 @@ def process(model, clip, path_outdata, idx):
         smap = model(clip.cuda()).cpu().data[0]
 
     smap = (smap.numpy() * 255.0).astype(np.int) / 255.0
-    smap = gaussian_filter(smap, sigma=7)
+    smap = gaussian_filter(smap, sigma=2)
     cv2.imwrite(os.path.join(path_outdata, "%04d.png" % (idx + 1)), (smap / np.max(smap) * 255.0).astype(np.uint8))
 
 

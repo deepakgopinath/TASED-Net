@@ -51,7 +51,7 @@ class NBackDataset(Dataset):
             # BGR to RGB?
             img = img[..., ::-1]
             if v < 0.5:
-                # horizontal flip?
+                # horizontal flip
                 img = img[:, ::-1, ...]
             clip.append(img)
 

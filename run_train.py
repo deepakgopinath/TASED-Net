@@ -7,6 +7,7 @@ import random
 import pickle
 from datetime import timedelta
 import torch
+import wandb
 from model import TASED_v2
 from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader, NBackDataset
@@ -16,6 +17,8 @@ from itertools import islice
 def main():
     """ concise script for training """
     # optional two command-line arguments
+    wandb.login()
+
     path_indata = "./DHF1K"
     path_output = "./output"
     ds_type = "DHF1k"  # or nback
@@ -30,11 +33,13 @@ def main():
                     path_output = sys.argv[4]
 
     # we checked that using only 2 gpus is enough to produce similar results
+    wandb.init(project="TASED_net", config={"dataset": ds_type, "batch_size": batch_size})
     print("Path to data folder ", path_indata)
     num_gpu = 2
     pile = 5
     batch_size = 8
     num_iters = 1000
+    wandb.init(project="TASED_net", config={"dataset": ds_type, "batch_size": batch_size})
 
     file_weight = "./S3D_kinetics400.pt"
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
@@ -127,6 +132,7 @@ def main():
 
         loss_sum += loss.detach().item()
         loss.backward()
+        # aggregation steps before backprp
         if (i + 1) % pile == 0:
             optimizer.step()
             optimizer.zero_grad()
@@ -138,6 +144,7 @@ def main():
                 % (step, num_iters, loss_sum / pile, timedelta(seconds=int(time.time() - start_time))),
                 flush=True,
             )
+            wandb.log({"training_loss": loss_sum / pile, "iteration_time": int(time.time() - start_time)})
             loss_sum = 0
 
             # adjust learning rate
@@ -150,6 +157,8 @@ def main():
                 torch.save(model.state_dict(), os.path.join(path_output, "iter_%04d.pt" % step))
 
         i += 1
+
+    wandb.finish()
 
 
 if __name__ == "__main__":

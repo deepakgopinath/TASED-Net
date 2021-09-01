@@ -62,9 +62,6 @@ def main():
     list_indata.sort()
 
     ctr = 0
-    import IPython
-
-    IPython.embed(banner1="check input dir")
     for dname in list_indata:
         # for each directory in the input folder
         if ctr > max_count:

@@ -33,7 +33,7 @@ def main():
                     path_output = sys.argv[4]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    wandb.init(project="TASED_net", config={"dataset": ds_type, "batch_size": batch_size})
+
     print("Path to data folder ", path_indata)
     num_gpu = 2
     pile = 5

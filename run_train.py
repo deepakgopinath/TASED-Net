@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import time
 import random
+import argparse
 import pickle
 from datetime import timedelta
 import torch
@@ -15,31 +16,17 @@ from torch.utils.data import DataLoader
 from itertools import islice
 
 
-def main():
+def main(args):
     """ concise script for training """
     # optional two command-line arguments
     wandb.login()
 
-    path_indata = "./DHF1K"
-    path_output = "./output"
-    ds_type = "DHF1k"  # or nback
-    len_temporal = 32  # Seems like this is fixed, or else the model fwd breaks
-    testing_frequency = 100
-    session_name = "dhf1k_train"
-    if len(sys.argv) > 1:
-        path_indata = sys.argv[1]
-        if len(sys.argv) > 2:
-            ds_type = sys.argv[2]
-            if len(sys.argv) > 3:
-                len_temporal = int(sys.argv[3])
-                if len(sys.argv) > 4:
-                    path_output = sys.argv[4]
-                    if len(sys.argv) > 5:
-                        testing_frequency = int(sys.argv[5])
-                        if len(sys.argv) > 6:
-                            session_name = sys.argv[6]
-
-    # we checked that using only 2 gpus is enough to produce similar results
+    path_indata = args.path_indata
+    path_output = args.path_output
+    ds_type = args.ds_type
+    len_temporal = args.len_temporal
+    testing_frequency = args.testing_frequency
+    session_name = args.session_name
 
     print("Path to data folder ", path_indata)
     num_gpu = 2
@@ -181,26 +168,27 @@ def main():
             if step % 25 == 0:
                 torch.save(model.state_dict(), os.path.join(path_output, "iter_%04d.pt" % step))
 
-            if step % testing_frequency == 0:
-                # testing phase
-                model.train(False)
+            if ds_type == "nback":
+                if step % testing_frequency == 0:
+                    # testing phase
+                    model.train(False)
 
-                for clip_test, annt_test in test_loader:
-                    with torch.set_grad_enabled(False):
-                        output_test = model(clip_test.cuda())
-                        loss_test = criterion(output_test, annt_test.cuda())
+                    for clip_test, annt_test in test_loader:
+                        with torch.set_grad_enabled(False):
+                            output_test = model(clip_test.cuda())
+                            loss_test = criterion(output_test, annt_test.cuda())
 
-                    loss_sum_test += loss_test.detach().item()
-                    print(
-                        "test_iteration_iteration: [%4d/%4d], loss: %.4f, %s"
-                        % (test_step, num_iters, loss_sum / pile, timedelta(seconds=int(time.time() - start_time))),
-                        flush=True,
-                    )
-                    wandb.log({"test_loss": loss_sum_test})
-                    loss_sum_test = 0
-                    test_step += 1
+                        loss_sum_test += loss_test.detach().item()
+                        print(
+                            "test_iteration_iteration: [%4d/%4d], loss: %.4f, %s"
+                            % (test_step, num_iters, loss_sum_test, timedelta(seconds=int(time.time() - start_time))),
+                            flush=True,
+                        )
+                        wandb.log({"test_loss": loss_sum_test})
+                        loss_sum_test = 0
+                        test_step += 1
 
-                model.train(True)
+                    model.train(True)
 
         i += 1
 
@@ -208,5 +196,26 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--path_indata", default="./DHF1K", help="Directory in which the raw_data is stored",
+    )
+    parser.add_argument(
+        "--path_output", default="./output", help="Directory in which models will be saved",
+    )
+    parser.add_argument(
+        "--ds_type", default="DHF1k", help="dataset type used. Currently supporting [DHF1k, nback]",
+    )
+    parser.add_argument(
+        "--len_temporal", type=int, default=32, help="Length of slice used for TASED net",
+    )
+    parser.add_argument(
+        "--testing_frequency", type=int, default=100, help="Frequency of running testing loop",
+    )
+    parser.add_argument(
+        "--test_split", type=float, default=0.2, help="Fraction of ds used for test split.",
+    )
+    parser.add_argument(
+        "--session_name", default="dhf1k_train", help="Wandb session name",
+    )
 

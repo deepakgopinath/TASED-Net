@@ -219,3 +219,5 @@ if __name__ == "__main__":
         "--session_name", default="dhf1k_train", help="Wandb session name",
     )
 
+    args = parser.parse_args()
+    main(args)

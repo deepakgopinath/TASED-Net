@@ -106,20 +106,37 @@ def main():
         nback_list_num_frames_all_dict = {k: v for k, v in nback_list_num_frames_all_dict.items() if v >= len_temporal}
         num_all_videos = len(nback_list_num_frames_all_dict.keys())
         print("Number of long enough videos ", num_all_videos)
-        video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
-        print("Length before deleting sanity challenge ", len(video_list))
-        if "sanity_check_challenge_1-of-3" in video_list:
-            video_list.remove("sanity_check_challenge_1-of-3")
-        if "sanity_check_challenge_2-of-3" in video_list:
-            video_list.remove("sanity_check_challenge_2-of-3")
-        if "sanity_check_challenge_3-of-3" in video_list:
-            video_list.remove("sanity_check_challenge_3-of-3")
+        all_video_list = list(nback_list_num_frames_all_dict.keys())
+        train_video_list = random.sample(list(nback_list_num_frames_all_dict.keys()), int(0.9 * num_all_videos))
+        test_video_list = list(set(all_video_list) - set(train_video_list))
 
-        print("Length  deleting sanity challenge ", len(video_list))
+        # save test split
+        with open(os.path.join(path_output, "test_split.pkl"), "wb") as fp:
+            pickle.dump(test_video_list, fp)
 
-        nback_ds = NBackDataset(path_indata, len_temporal, video_list)
+        print("Length before deleting sanity challenge ", len(train_video_list))
 
-        train_loader = InfiniteDataLoader(nback_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+        if "sanity_check_challenge_1-of-3" in train_video_list:
+            train_video_list.remove("sanity_check_challenge_1-of-3")
+        if "sanity_check_challenge_2-of-3" in train_video_list:
+            train_video_list.remove("sanity_check_challenge_2-of-3")
+        if "sanity_check_challenge_3-of-3" in train_video_list:
+            train_video_list.remove("sanity_check_challenge_3-of-3")
+
+        if "sanity_check_challenge_1-of-3" in test_video_list:
+            test_video_list.remove("sanity_check_challenge_1-of-3")
+        if "sanity_check_challenge_2-of-3" in test_video_list:
+            test_video_list.remove("sanity_check_challenge_2-of-3")
+        if "sanity_check_challenge_3-of-3" in test_video_list:
+            test_video_list.remove("sanity_check_challenge_3-of-3")
+
+        print("Length  deleting sanity challenge ", len(train_video_list))
+
+        nback_train_ds = NBackDataset(path_indata, len_temporal, train_video_list)
+        # nback_test_ds = NBackDataset(path_indata, len_temporal, test_video_list)
+
+        train_loader = InfiniteDataLoader(nback_train_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+        # test_loader = InfiniteDataLoader(nback_test_ds, batch_size=batch_size, shuffle=True, num_workers=8)
 
     i, step = 0, 0
     loss_sum = 0

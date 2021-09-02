@@ -9,7 +9,7 @@ from model import TASED_v2
 from scipy.ndimage.filters import gaussian_filter
 
 
-def main():
+def main(args):
     """ read frames in path_indata and generate frame-wise saliency maps in path_output """
     # optional two command-line arguments
 

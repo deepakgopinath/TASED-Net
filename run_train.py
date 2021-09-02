@@ -147,6 +147,7 @@ def main():
 
     i, step, test_step = 0, 0, 0
     loss_sum = 0
+    loss_sum_test = 0.0
     start_time = time.time()
     # no testing loop during training.
     for clip, annt in islice(train_loader, num_iters * pile):
@@ -195,7 +196,7 @@ def main():
                         % (test_step, num_iters, loss_sum / pile, timedelta(seconds=int(time.time() - start_time))),
                         flush=True,
                     )
-                    wandb.log({"test_loss": loss_sum_test, "iteration_time": int(time.time() - start_time)})
+                    wandb.log({"test_loss": loss_sum_test})
                     loss_sum_test = 0
                     test_step += 1
 

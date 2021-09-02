@@ -11,6 +11,7 @@ import wandb
 from model import TASED_v2
 from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader, NBackDataset
+from torch.utils.data import DataLoader
 from itertools import islice
 
 
@@ -23,6 +24,8 @@ def main():
     path_output = "./output"
     ds_type = "DHF1k"  # or nback
     len_temporal = 32  # Seems like this is fixed, or else the model fwd breaks
+    testing_frequency = 100
+    session_name = "dhf1k_train"
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
@@ -31,6 +34,10 @@ def main():
                 len_temporal = int(sys.argv[3])
                 if len(sys.argv) > 4:
                     path_output = sys.argv[4]
+                    if len(sys.argv) > 5:
+                        testing_frequency = int(sys.argv[5])
+                        if len(sys.argv) > 6:
+                            session_name = sys.argv[6]
 
     # we checked that using only 2 gpus is enough to produce similar results
 
@@ -39,7 +46,7 @@ def main():
     pile = 5
     batch_size = 8
     num_iters = 1000
-    wandb.init(project="TASED_net", config={"dataset": ds_type, "batch_size": batch_size})
+    wandb.init(project="TASED_net", id=session_name, config={"dataset": ds_type, "batch_size": batch_size})
 
     file_weight = "./S3D_kinetics400.pt"
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
@@ -133,12 +140,12 @@ def main():
         print("Length  deleting sanity challenge ", len(train_video_list))
 
         nback_train_ds = NBackDataset(path_indata, len_temporal, train_video_list)
-        # nback_test_ds = NBackDataset(path_indata, len_temporal, test_video_list)
+        nback_test_ds = NBackDataset(path_indata, len_temporal, test_video_list)
 
         train_loader = InfiniteDataLoader(nback_train_ds, batch_size=batch_size, shuffle=True, num_workers=8)
-        # test_loader = InfiniteDataLoader(nback_test_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+        test_loader = DataLoader(nback_test_ds, batch_size=batch_size, shuffle=False, num_workers=8, drop_last=True)
 
-    i, step = 0, 0
+    i, step, test_step = 0, 0, 0
     loss_sum = 0
     start_time = time.time()
     # no testing loop during training.
@@ -157,7 +164,7 @@ def main():
 
             # whole process takes less than 3 hours
             print(
-                "iteration: [%4d/%4d], loss: %.4f, %s"
+                "training iteration: [%4d/%4d], loss: %.4f, %s"
                 % (step, num_iters, loss_sum / pile, timedelta(seconds=int(time.time() - start_time))),
                 flush=True,
             )
@@ -172,6 +179,27 @@ def main():
 
             if step % 25 == 0:
                 torch.save(model.state_dict(), os.path.join(path_output, "iter_%04d.pt" % step))
+
+            if step % testing_frequency == 0:
+                # testing phase
+                model.train(False)
+
+                for clip_test, annt_test in test_loader:
+                    with torch.set_grad_enabled(False):
+                        output_test = model(clip_test.cuda())
+                        loss_test = criterion(output_test, annt_test.cuda())
+
+                    loss_sum_test += loss_test.detach().item()
+                    print(
+                        "test_iteration_iteration: [%4d/%4d], loss: %.4f, %s"
+                        % (test_step, num_iters, loss_sum / pile, timedelta(seconds=int(time.time() - start_time))),
+                        flush=True,
+                    )
+                    wandb.log({"test_loss": loss_sum_test, "iteration_time": int(time.time() - start_time)})
+                    loss_sum_test = 0
+                    test_step += 1
+
+                model.train(True)
 
         i += 1
 

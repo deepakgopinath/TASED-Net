@@ -11,22 +11,15 @@ from scipy.ndimage.filters import gaussian_filter
 def main():
     """ read frames in path_indata and generate frame-wise saliency maps in path_output """
     # optional two command-line arguments
-    path_indata = "./example"
-    path_output = "./output"
-    len_temporal = 32
-    file_weight = "./TASED_updated.pt"
-    max_count = 10
 
-    if len(sys.argv) > 1:
-        path_indata = sys.argv[1]
-        if len(sys.argv) > 2:
-            path_output = sys.argv[2]
-            if len(sys.argv) > 3:
-                file_weight = sys.argv[3]
-                if len(sys.argv) > 4:
-                    max_count = int(sys.argv[4])
-                    if len(sys.argv) > 5:
-                        ds_type = sys.argv[5]
+    path_indata = args.path_indata
+    path_output = args.path_output
+    ds_type = args.ds_type
+    len_temporal = args.len_temporal
+    session_name = args.session_name
+    file_weight = args.file_weight
+    path_to_test_set_pkl = args.path_to_test_set_pkl
+    max_count = args.max_count
 
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -60,10 +53,16 @@ def main():
     # iterate over the path_indata directory
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
+    if ds_type == "nback":
+        with open(path_to_test_set_pkl, "rb") as fp:
+            test_set_vids = pickle.load(fp)
 
     ctr = 0
     for dname in list_indata:
         # for each directory in the input folder
+        if ds_type == "nback":
+            if dname not in test_set_vids:
+                continue
         if ctr > max_count:
             break
         print("processing " + dname)
@@ -127,5 +126,35 @@ def process(model, clip, path_outdata, idx):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--path_indata", default="./DHF1K", help="Directory in which the raw_data is stored",
+    )
+    parser.add_argument(
+        "--path_output", default="./output", help="Directory in which models will be saved",
+    )
+    parser.add_argument(
+        "--path_to_test_set_pkl",
+        default="./output/test_split.pkl",
+        help="Path to pkl file containing the test set will be stored ",
+    )
+    parser.add_argument(
+        "--file_weight", default="./TASED_updated.pt", help="Path to model file ",
+    )
+    parser.add_argument(
+        "--ds_type", default="DHF1k", help="dataset type used. Currently supporting [DHF1k, nback]",
+    )
+    parser.add_argument(
+        "--len_temporal", type=int, default=32, help="Length of slice used for TASED net",
+    )
+    parser.add_argument(
+        "--max_count", type=int, default=10, help="Length of slice used for TASED net",
+    )
+
+    parser.add_argument(
+        "--session_name", default="dhf1k_test", help="Wandb session name",
+    )
+
+    args = parser.parse_args()
+    main(args)
 

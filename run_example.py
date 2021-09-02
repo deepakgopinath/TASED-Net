@@ -58,6 +58,10 @@ def main(args):
         with open(path_to_test_set_pkl, "rb") as fp:
             test_set_vids = pickle.load(fp)
 
+    import IPython
+
+    IPython.embed(banner1="check")
+
     ctr = 0
     for dname in list_indata:
         # for each directory in the input folder

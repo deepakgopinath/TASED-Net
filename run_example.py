@@ -58,9 +58,7 @@ def main(args):
         with open(path_to_test_set_pkl, "rb") as fp:
             test_set_vids = pickle.load(fp)
 
-    import IPython
-
-    IPython.embed(banner1="check")
+        test_set_vids = [t[:-7] for t in test_set_vids]  # remove _1-of-3 etc
 
     ctr = 0
     for dname in list_indata:
